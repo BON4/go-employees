@@ -17,7 +17,7 @@ type tskPostgresRepo struct {
 	conn *pgxpool.Pool
 }
 
-func (t tskPostgresRepo) Create(ctx context.Context, tsk *models.Task) (*models.Task, error) {
+func (t *tskPostgresRepo) Create(ctx context.Context, tsk *models.Task) (*models.Task, error) {
 	q := pgCreateTask(t.tableName)
 
 	var createdTask models.Task
@@ -50,7 +50,7 @@ func (t tskPostgresRepo) Create(ctx context.Context, tsk *models.Task) (*models.
 	return &createdTask, err
 }
 
-func (t tskPostgresRepo) Update(ctx context.Context, tsk *models.Task) (*models.Task, error) {
+func (t *tskPostgresRepo) Update(ctx context.Context, tsk *models.Task) (*models.Task, error) {
 	q := pgUpdateTask(t.tableName)
 
 	var updatedTask models.Task
@@ -83,16 +83,108 @@ func (t tskPostgresRepo) Update(ctx context.Context, tsk *models.Task) (*models.
 	return &updatedTask, err
 }
 
-func (t tskPostgresRepo) GetByID(ctx context.Context, tskID uint) (*models.Task, error) {
-	panic("implement me")
+func (t *tskPostgresRepo) GetByID(ctx context.Context, tskID uint) (*models.Task, error) {
+	q := pgGetTaskByID(t.tableName)
+	var foundTask models.Task
+
+	err := t.conn.QueryRow(ctx, q, tskID).
+		Scan(
+			&foundTask.TskId,
+			&foundTask.Open,
+			&foundTask.Close,
+			&foundTask.Closed,
+			&foundTask.Meta,
+			&foundTask.EmpId,
+		)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, dbErrors.NewDoesNotExists(err,"tskPostgresRepo.GetByID: task with this credentials does not exists")
+		}
+		return nil, gerrors.Wrap(err, "tskPostgresRepo.GetByID")
+	}
+
+	return &foundTask, nil
 }
 
-func (t tskPostgresRepo) Delete(ctx context.Context, tskID uint) error {
-	panic("implement me")
+func (t *tskPostgresRepo) DeleteByTaskId(ctx context.Context, tskID uint) error {
+	q := pgDeleteTask(t.tableName)
+	ctag, err := t.conn.Exec(ctx, q, tskID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return dbErrors.NewDoesNotExists(err,"tskPostgresRepo.Delete: task with this credentials does not exists")
+		}
+		return gerrors.Wrap(err, "tskPostgresRepo.Delete")
+	}
+
+	if ctag.RowsAffected() == 0 {
+		return dbErrors.NewUnknown(errors.New("tskPostgresRepo.Delete"), "nothing has been deleted")
+	}
+	return nil
 }
 
-func (t tskPostgresRepo) List(ctx context.Context, req *models.ListTskRequest, dest []models.Task) (int, error) {
-	panic("implement me")
+func (t *tskPostgresRepo) DeleteByEmployeeId(ctx context.Context, empId uint) error {
+	q := pgDeleteTaskByEmpId(t.tableName)
+	ctag, err := t.conn.Exec(ctx, q, empId)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return dbErrors.NewDoesNotExists(err,"tskPostgresRepo.Delete: tasks with this credentials does not exists")
+		}
+		return gerrors.Wrap(err, "tskPostgresRepo.Delete")
+	}
+
+	if ctag.RowsAffected() == 0 {
+		return dbErrors.NewUnknown(errors.New("tskPostgresRepo.Delete"), "nothing has been deleted")
+	}
+	return nil
+}
+
+func (t *tskPostgresRepo) List(ctx context.Context, req *models.ListTskRequest, dest []models.Task) (int, error) {
+	if len(dest) == 0 {
+		return 0, nil
+	}
+
+	if req.PageSize == 0 {
+		return 0, nil
+	}
+
+	q := pgListTask(t.tableName)
+	rows, err := t.conn.Query(ctx, q, req.PageSize, req.PageNumber)
+	if err != nil {
+		return 0, gerrors.Wrap(err, "tskPostgresRepo.List")
+	}
+	defer rows.Close()
+
+	var foundTask models.Task
+	i := 0
+	for rows.Next() {
+		if i >= len(dest) {
+			return i, nil
+		}
+
+		err := rows.
+			Scan(
+			&foundTask.TskId,
+			&foundTask.Open,
+			&foundTask.Close,
+			&foundTask.Closed,
+			&foundTask.Meta,
+			&foundTask.EmpId,
+		)
+
+		if err != nil {
+			return 0, gerrors.Wrap(err, "tskPostgresRepo.List")
+		}
+
+		dest[i] = foundTask
+		i++
+	}
+
+	if rows.Err() != nil {
+		return 0, gerrors.Wrap(rows.Err(), "tskPostgresRepo.List.Rows")
+	}
+
+	return i, nil
 }
 
 func NewTaskPostgresRepo(conn *pgxpool.Pool, tableName string) tasks.TaskRepository {

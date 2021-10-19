@@ -13,6 +13,10 @@ var (
 		return `delete from `+tableName+` where tsk_id = $1`
 	}
 
+	pgDeleteTaskByEmpId = func(tableName string) string {
+		return `delete from `+tableName+` where emp_id = $1`
+	}
+
 	pgListTask = func(tableName string) string {
 		return `select * from `+tableName+` limit $1 offset $2 `
 	}
