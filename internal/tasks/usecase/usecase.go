@@ -20,8 +20,8 @@ func (t *TskUC) Update(ctx context.Context, tsk *models.Task) (*models.Task, err
 	return t.tskRepo.Update(ctx, tsk)
 }
 
-func (t *TskUC) GetByID(ctx context.Context, tskID uint) (*models.Task, error) {
-	return t.tskRepo.GetByID(ctx, tskID)
+func (t *TskUC) GetByTaskId(ctx context.Context, tskID uint) (*models.Task, error) {
+	return t.tskRepo.GetByTaskId(ctx, tskID)
 }
 
 func (t *TskUC) DeleteByTaskId(ctx context.Context, tskID uint) error {
@@ -34,6 +34,10 @@ func (t *TskUC) DeleteByEmployeeId(ctx context.Context, empId uint) error {
 
 func (t *TskUC) List(ctx context.Context, req *models.ListTskRequest, dest []models.Task) (int, error) {
 	return t.tskRepo.List(ctx, req, dest)
+}
+
+func (t *TskUC) GetByEmployeeId(ctx context.Context, empId uint, req *models.ListTskRequest, dest []models.Task) (int, error) {
+	panic("implement me")
 }
 
 func NewTaskUseCase(tskRepo tasks.TaskRepository, logger *logrus.Logger) tasks.TaskUC {

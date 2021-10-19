@@ -24,4 +24,8 @@ var (
 	pgGetTaskByID = func(tableName string) string {
 		return `select * from `+tableName+` where tsk_id = $1`
 	}
+
+	pgGetTaskByEmpId = func(taskTableName string, empTableName string) string {
+		return `select t.* from ` + empTableName +` inner join ` + taskTableName + ` t on employee.emp_id = t.emp_id where t.emp_id = $1 limit $2 offset $3`
+	}
 )

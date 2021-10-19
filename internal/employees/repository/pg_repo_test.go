@@ -174,7 +174,6 @@ func TestEmpPostgresRepo_List(t *testing.T) {
 		PageNumber: 0,
 	}, dest)
 	require.Nil(t, err)
-	if n < 2 {
-		panic("a")
-	}
+	require.Greater(t, n, 2)
+	require.Equal(t, n, 3)
 }

@@ -13,6 +13,11 @@ import (
 	"time"
 )
 
+const (
+	taskTableName = "task"
+	empTableName = "employee"
+)
+
 var (
 	skipDatabaseTest bool = false
 	TaskFactory models.TaskFactory
@@ -22,12 +27,12 @@ var (
 )
 
 func flushEmployeeTable() error {
-	_, err := ConnDB.Exec(context.Background(), "delete from employee")
+	_, err := ConnDB.Exec(context.Background(), "delete from "+empTableName)
 	return err
 }
 
 func flushTaskTable() error {
-	_, err := ConnDB.Exec(context.Background(), "delete from task")
+	_, err := ConnDB.Exec(context.Background(), "delete from "+taskTableName)
 	return err
 }
 
@@ -72,8 +77,8 @@ func TestMain(m *testing.M) {
 
 func TestTskPostgresRepo_Create(t *testing.T) {
 	t.Parallel()
-	tskRepo := NewTaskPostgresRepo(ConnDB, "task")
-	empRepo := repository.NewEmpPostgresRepo(ConnDB, "employee")
+	tskRepo := NewTaskPostgresRepo(ConnDB, taskTableName, empTableName)
+	empRepo := repository.NewEmpPostgresRepo(ConnDB, empTableName)
 	empUC := usecase.NewEmployeeUC(empRepo, nil)
 
 	t.Run("OK", func(t *testing.T) {
@@ -108,8 +113,8 @@ func TestTskPostgresRepo_Create(t *testing.T) {
 
 func TestTskPostgresRepo_Update(t *testing.T) {
 	t.Parallel()
-	tskRepo := NewTaskPostgresRepo(ConnDB, "task")
-	empRepo := repository.NewEmpPostgresRepo(ConnDB, "employee")
+	tskRepo := NewTaskPostgresRepo(ConnDB, taskTableName, empTableName)
+	empRepo := repository.NewEmpPostgresRepo(ConnDB, empTableName)
 	empUC := usecase.NewEmployeeUC(empRepo, nil)
 
 	t.Run("OK", func(t *testing.T) {
@@ -165,8 +170,8 @@ func TestTskPostgresRepo_Update(t *testing.T) {
 
 func TestTskPostgresRepo_DeleteByTaskId(t *testing.T) {
 	t.Parallel()
-	tskRepo := NewTaskPostgresRepo(ConnDB, "task")
-	empRepo := repository.NewEmpPostgresRepo(ConnDB, "employee")
+	tskRepo := NewTaskPostgresRepo(ConnDB, taskTableName, empTableName)
+	empRepo := repository.NewEmpPostgresRepo(ConnDB, empTableName)
 	empUC := usecase.NewEmployeeUC(empRepo, nil)
 
 	t.Run("OK", func(t *testing.T) {
@@ -204,8 +209,8 @@ func TestTskPostgresRepo_DeleteByTaskId(t *testing.T) {
 
 func TestTskPostgresRepo_DeleteByEmployeeId(t *testing.T) {
 	t.Parallel()
-	tskRepo := NewTaskPostgresRepo(ConnDB, "task")
-	empRepo := repository.NewEmpPostgresRepo(ConnDB, "employee")
+	tskRepo := NewTaskPostgresRepo(ConnDB, taskTableName, empTableName)
+	empRepo := repository.NewEmpPostgresRepo(ConnDB, empTableName)
 	empUC := usecase.NewEmployeeUC(empRepo, nil)
 
 	t.Run("OK", func(t *testing.T) {
@@ -250,8 +255,8 @@ func TestTskPostgresRepo_DeleteByEmployeeId(t *testing.T) {
 }
 
 func TestTskPostgresRepo_List(t *testing.T) {
-	tskRepo := NewTaskPostgresRepo(ConnDB, "task")
-	empRepo := repository.NewEmpPostgresRepo(ConnDB, "employee")
+	tskRepo := NewTaskPostgresRepo(ConnDB, taskTableName, empTableName)
+	empRepo := repository.NewEmpPostgresRepo(ConnDB, empTableName)
 	empUC := usecase.NewEmployeeUC(empRepo, nil)
 
 	fEmp, err := EmployeeFactory.NewUser("test", "test", 120)
@@ -286,7 +291,47 @@ func TestTskPostgresRepo_List(t *testing.T) {
 		PageNumber: 0,
 	}, dest)
 	require.Nil(t, err)
-	if n < 2 {
-		panic("a")
-	}
+	require.Greater(t, n, 2)
+	require.Equal(t, n, 3)
+}
+
+func TestTskPostgresRepo_GetByEmployeeId(t *testing.T) {
+	tskRepo := NewTaskPostgresRepo(ConnDB, taskTableName, empTableName)
+	empRepo := repository.NewEmpPostgresRepo(ConnDB, empTableName)
+	empUC := usecase.NewEmployeeUC(empRepo, nil)
+
+	fEmp, err := EmployeeFactory.NewUser("test", "test", 120)
+	require.NoError(t, err)
+
+	createdEmp, err := empUC.Create(context.Background(), &fEmp)
+	require.NoError(t, err)
+
+	task1, err := TaskFactory.NewTask(createdEmp.EmpId, time.Now().Unix(), time.Now().Add(time.Hour*10).Unix(), false, "")
+	require.NoError(t, err)
+	task2, err := TaskFactory.NewTask(createdEmp.EmpId, time.Now().Unix(), time.Now().Add(time.Hour*10).Unix(), false, "")
+	require.NoError(t, err)
+	task3, err := TaskFactory.NewTask(createdEmp.EmpId, time.Now().Unix(), time.Now().Add(time.Hour*10).Unix(), false, "")
+	require.NoError(t, err)
+
+	createdTask1, err := tskRepo.Create(context.Background(), &task1)
+	require.NoError(t, err)
+	require.NotNil(t, createdTask1)
+
+	createdTask2, err := tskRepo.Create(context.Background(), &task2)
+	require.NoError(t, err)
+	require.NotNil(t, createdTask2)
+
+	createdTask3, err := tskRepo.Create(context.Background(), &task3)
+	require.NoError(t, err)
+	require.NotNil(t, createdTask3)
+
+
+	dest := make([]models.Task, 10)
+	n, err := tskRepo.GetByEmployeeId(context.Background(), createdEmp.EmpId, &models.ListTskRequest{
+		PageSize:   10,
+		PageNumber: 0,
+	}, dest)
+	require.Nil(t, err)
+	require.Greater(t, n, 2)
+	require.Equal(t, n, 3)
 }

@@ -13,12 +13,13 @@ import (
 )
 
 type tskPostgresRepo struct {
-	tableName string
+	taskTableName, empTableName string
 	conn *pgxpool.Pool
 }
 
+
 func (t *tskPostgresRepo) Create(ctx context.Context, tsk *models.Task) (*models.Task, error) {
-	q := pgCreateTask(t.tableName)
+	q := pgCreateTask(t.taskTableName)
 
 	var createdTask models.Task
 
@@ -51,7 +52,7 @@ func (t *tskPostgresRepo) Create(ctx context.Context, tsk *models.Task) (*models
 }
 
 func (t *tskPostgresRepo) Update(ctx context.Context, tsk *models.Task) (*models.Task, error) {
-	q := pgUpdateTask(t.tableName)
+	q := pgUpdateTask(t.taskTableName)
 
 	var updatedTask models.Task
 
@@ -83,8 +84,8 @@ func (t *tskPostgresRepo) Update(ctx context.Context, tsk *models.Task) (*models
 	return &updatedTask, err
 }
 
-func (t *tskPostgresRepo) GetByID(ctx context.Context, tskID uint) (*models.Task, error) {
-	q := pgGetTaskByID(t.tableName)
+func (t *tskPostgresRepo) GetByTaskId(ctx context.Context, tskID uint) (*models.Task, error) {
+	q := pgGetTaskByID(t.taskTableName)
 	var foundTask models.Task
 
 	err := t.conn.QueryRow(ctx, q, tskID).
@@ -108,7 +109,7 @@ func (t *tskPostgresRepo) GetByID(ctx context.Context, tskID uint) (*models.Task
 }
 
 func (t *tskPostgresRepo) DeleteByTaskId(ctx context.Context, tskID uint) error {
-	q := pgDeleteTask(t.tableName)
+	q := pgDeleteTask(t.taskTableName)
 	ctag, err := t.conn.Exec(ctx, q, tskID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -124,7 +125,7 @@ func (t *tskPostgresRepo) DeleteByTaskId(ctx context.Context, tskID uint) error 
 }
 
 func (t *tskPostgresRepo) DeleteByEmployeeId(ctx context.Context, empId uint) error {
-	q := pgDeleteTaskByEmpId(t.tableName)
+	q := pgDeleteTaskByEmpId(t.taskTableName)
 	ctag, err := t.conn.Exec(ctx, q, empId)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -148,7 +149,7 @@ func (t *tskPostgresRepo) List(ctx context.Context, req *models.ListTskRequest, 
 		return 0, nil
 	}
 
-	q := pgListTask(t.tableName)
+	q := pgListTask(t.taskTableName)
 	rows, err := t.conn.Query(ctx, q, req.PageSize, req.PageNumber)
 	if err != nil {
 		return 0, gerrors.Wrap(err, "tskPostgresRepo.List")
@@ -187,9 +188,58 @@ func (t *tskPostgresRepo) List(ctx context.Context, req *models.ListTskRequest, 
 	return i, nil
 }
 
-func NewTaskPostgresRepo(conn *pgxpool.Pool, tableName string) tasks.TaskRepository {
+func (t *tskPostgresRepo) GetByEmployeeId(ctx context.Context, empId uint, req *models.ListTskRequest, dest []models.Task) (int, error) {
+	if len(dest) == 0 {
+		return 0, nil
+	}
+
+	if req.PageSize == 0 {
+		return 0, nil
+	}
+
+	q := pgGetTaskByEmpId(t.taskTableName, t.empTableName)
+	rows, err := t.conn.Query(ctx, q, empId, req.PageSize, req.PageNumber)
+	if err != nil {
+		return 0, gerrors.Wrap(err, "tskPostgresRepo.GetByEmployeeId")
+	}
+	defer rows.Close()
+
+	var foundTask models.Task
+	i := 0
+	for rows.Next() {
+		if i >= len(dest) {
+			return i, nil
+		}
+
+		err := rows.
+			Scan(
+				&foundTask.TskId,
+				&foundTask.Open,
+				&foundTask.Close,
+				&foundTask.Closed,
+				&foundTask.Meta,
+				&foundTask.EmpId,
+			)
+
+		if err != nil {
+			return 0, gerrors.Wrap(err, "tskPostgresRepo.GetByEmployeeId")
+		}
+
+		dest[i] = foundTask
+		i++
+	}
+
+	if rows.Err() != nil {
+		return 0, gerrors.Wrap(rows.Err(), "tskPostgresRepo.GetByEmployeeId.Rows")
+	}
+
+	return i, nil
+}
+
+func NewTaskPostgresRepo(conn *pgxpool.Pool, taskTableName, empTableName string) tasks.TaskRepository {
 	return &tskPostgresRepo{
-		tableName: tableName,
+		taskTableName: taskTableName,
+		empTableName: empTableName,
 		conn:      conn,
 	}
 }
