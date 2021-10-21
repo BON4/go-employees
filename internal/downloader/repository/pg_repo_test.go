@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"fmt"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -9,9 +11,11 @@ import (
 	empRepoMd "goland-hello/internal/employees/repository"
 	empUcMd "goland-hello/internal/employees/usecase"
 	"goland-hello/internal/models"
+	"goland-hello/internal/pkg/utils"
 	tskRepoMd "goland-hello/internal/tasks/repository"
 	tskUcMd "goland-hello/internal/tasks/usecase"
-	"os"
+	"io"
+	"sync"
 	"testing"
 	"time"
 )
@@ -79,28 +83,103 @@ func TestMain(m *testing.M) {
 	}
 }
 
-func TestTaskToByte(t *testing.T) {
-	tskRepo := tskRepoMd.NewTaskPostgresRepo(ConnDB, taskTableName, empTableName)
-	tskUc := tskUcMd.NewTaskUseCase(tskRepo, nil)
+// ! WARNING !
+// These tests should not been executed parallel or concurrently
+func TestDownloaderRepository_Write(t *testing.T) {
+	require.NoError(t, flushTaskTable())
+	require.NoError(t, flushEmployeeTable())
 
-	empRepo := empRepoMd.NewEmpPostgresRepo(ConnDB, empTableName)
-	empUC := empUcMd.NewEmployeeUC(empRepo, nil)
+	t.Run("WriteTask", func(t *testing.T) {
+		tskRepo := tskRepoMd.NewTaskPostgresRepo(ConnDB, taskTableName, empTableName)
+		tskUc := tskUcMd.NewTaskUseCase(tskRepo, nil)
 
-	dwRepo := NewDownloaderRepository(ConnDB)
+		empRepo := empRepoMd.NewEmpPostgresRepo(ConnDB, empTableName)
+		empUC := empUcMd.NewEmployeeUC(empRepo, nil)
 
-	emp, err := EmployeeFactory.NewUser("test", "test", 1200)
-	require.NoError(t, err)
+		dwRepo := NewDownloaderRepository(ConnDB)
 
-	createdEmp, err := empUC.Create(context.Background(), &emp)
-	require.NoError(t, err)
-
-	for i := 0; i < 10; i++ {
-		task, err := TaskFactory.NewTask(createdEmp.EmpId, time.Now().Unix(), time.Now().Add(time.Hour*10).Unix(), false, fmt.Sprintf("Tsk #%d", i))
+		emp, err := EmployeeFactory.NewUser("test", "test", 1200)
 		require.NoError(t, err)
-		_, err = tskUc.Create(context.Background(), &task)
-		require.NoError(t, err)
-	}
 
-	_, err = dwRepo.WriteTasks(context.Background(), taskTableName, os.Stdout)
-	require.NoError(t, err)
+		createdEmp, err := empUC.Create(context.Background(), &emp)
+		require.NoError(t, err)
+
+		rActual, wActual := io.Pipe()
+		rTest, wTest := io.Pipe()
+
+		wg := &sync.WaitGroup{}
+		wg.Add(1)
+		go func(t *testing.T, wg *sync.WaitGroup) {
+			defer wg.Done()
+			actualCsv, err := io.ReadAll(rActual)
+			require.NoError(t, err)
+			testCsv, err := io.ReadAll(rTest)
+			require.NoError(t, err)
+			require.Equal(t, 0, bytes.Compare(testCsv, actualCsv))
+		}(t, wg)
+
+		testBuf := bufio.NewWriter(wActual)
+		for i := 0; i < 10; i++ {
+			task, err := TaskFactory.NewTask(createdEmp.EmpId, time.Now().Unix(), time.Now().Add(time.Hour*10).Unix(), false, fmt.Sprintf("Tsk #%d", i))
+			require.NoError(t, err)
+
+			createdTsk, err := tskUc.Create(context.Background(), &task)
+			require.NoError(t, err)
+
+			_, err = utils.TaskToByte(createdTsk, testBuf)
+			require.NoError(t, err)
+		}
+		testBuf.Flush()
+		wActual.Close()
+
+		_, err = dwRepo.WriteTasks(context.Background(), taskTableName, wTest)
+		require.NoError(t, err)
+		wTest.Close()
+
+		wg.Wait()
+	})
+
+	require.NoError(t, flushTaskTable())
+	require.NoError(t, flushEmployeeTable())
+
+	t.Run("WriteEmployees", func(t *testing.T) {
+		empRepo := empRepoMd.NewEmpPostgresRepo(ConnDB, empTableName)
+		empUC := empUcMd.NewEmployeeUC(empRepo, nil)
+
+		dwRepo := NewDownloaderRepository(ConnDB)
+
+		rActual, wActual := io.Pipe()
+		rTest, wTest := io.Pipe()
+
+		wg := &sync.WaitGroup{}
+		wg.Add(1)
+		go func(t *testing.T, wg *sync.WaitGroup) {
+			defer wg.Done()
+			actualCsv, err := io.ReadAll(rActual)
+			require.NoError(t, err)
+			testCsv, err := io.ReadAll(rTest)
+			require.NoError(t, err)
+			require.Equal(t, 0, bytes.Compare(testCsv, actualCsv))
+		}(t, wg)
+
+		testBuf := bufio.NewWriter(wActual)
+		for i := 0; i < 10; i++ {
+			emp, err := EmployeeFactory.NewUser("test", "test", 1200)
+			require.NoError(t, err)
+
+			createdEmp, err := empUC.Create(context.Background(), &emp)
+			require.NoError(t, err)
+
+			_, err = utils.EmpToByte(createdEmp, testBuf)
+			require.NoError(t, err)
+		}
+		testBuf.Flush()
+		wActual.Close()
+
+		_, err := dwRepo.WriteEmployees(context.Background(), empTableName, wTest)
+		require.NoError(t, err)
+		wTest.Close()
+
+		wg.Wait()
+	})
 }

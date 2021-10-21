@@ -9,7 +9,7 @@ import (
 const sep = ','
 const end = '\n'
 
-//TODO SHITS NEEDS GENERICS FOR CLEANER REALISATION
+//TODO SHITS NEEDS GENERICS FOR CLEANER IMPLEMENTATION
 
 // EmpToByte - writes employee struct to buffer in csv RFC 4180 format, returns number of written bytes and error
 func EmpToByte(emp *models.Employee,  bw *bufio.Writer) (int, error) {

@@ -15,7 +15,7 @@ type DownloaderRepository struct {
 	conn *pgxpool.Pool
 }
 
-//TODO SHITS NEEDS GENERICS FOR CLEANER REALISATION
+//TODO SHITS NEEDS GENERICS FOR CLEANER IMPLEMENTATION
 
 // WriteEmployees - Writes whole employee table to writer in csv RFC 4180 format, returns number of bytes that have been written and error
 func (d *DownloaderRepository) WriteEmployees(ctx context.Context, tableName string, writer io.Writer) (int, error) {
