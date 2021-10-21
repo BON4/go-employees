@@ -123,7 +123,7 @@ func (e *empPostgresRepo) List(ctx context.Context, req *models.ListEmpRequest, 
 	var foundEmp models.Employee
 	i := 0
 	for rows.Next() {
-		if i >= len(dest) {
+		if i >= len(dest) || ctx.Err() != nil {
 			return i, nil
 		}
 

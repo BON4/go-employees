@@ -73,6 +73,10 @@ func (d *DownloaderRepository) WriteTasks(ctx context.Context, writer io.Writer)
 	n := 0
 	var foundTask models.Task
 	for rows.Next() {
+		if ctx.Err() != nil {
+			return n, nil
+		}
+
 		err := rows.
 			Scan(
 				&foundTask.TskId,

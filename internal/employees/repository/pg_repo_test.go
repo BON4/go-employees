@@ -29,7 +29,8 @@ func TestMain(m *testing.M) {
 		MinSalary:          0,
 	})
 
-	ConfigDB, err := config.ParseConfig("/home/home/go/github.com/BON4/go-employees/config/test_conf.yaml")
+	var err error
+	ConfigDB, err = config.ParseConfig("/home/home/go/github.com/BON4/go-employees/config/test_conf.yaml")
 	if err != nil {
 		panic(err)
 	}
