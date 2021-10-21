@@ -22,7 +22,6 @@ func (t *tskPostgresRepo) Create(ctx context.Context, tsk *models.Task) (*models
 	q := pgCreateTask(t.taskTableName)
 
 	var createdTask models.Task
-
 	err := t.conn.QueryRow(ctx, q, tsk.Open, tsk.Close, tsk.Closed,tsk.Meta, tsk.EmpId).
 		Scan(
 			&createdTask.TskId,
@@ -159,7 +158,8 @@ func (t *tskPostgresRepo) List(ctx context.Context, req *models.ListTskRequest, 
 	var foundTask models.Task
 	i := 0
 	for rows.Next() {
-		if i >= len(dest) {
+		//TODO maybe return 0, err if context closed
+		if i >= len(dest) || ctx.Err() != nil {
 			return i, nil
 		}
 
@@ -207,7 +207,8 @@ func (t *tskPostgresRepo) GetByEmployeeId(ctx context.Context, empId uint, req *
 	var foundTask models.Task
 	i := 0
 	for rows.Next() {
-		if i >= len(dest) {
+		//TODO maybe return 0, err if context closed
+		if i >= len(dest) || ctx.Err() != nil {
 			return i, nil
 		}
 

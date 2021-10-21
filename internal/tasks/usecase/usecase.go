@@ -37,7 +37,7 @@ func (t *TskUC) List(ctx context.Context, req *models.ListTskRequest, dest []mod
 }
 
 func (t *TskUC) GetByEmployeeId(ctx context.Context, empId uint, req *models.ListTskRequest, dest []models.Task) (int, error) {
-	panic("implement me")
+	return t.tskRepo.GetByEmployeeId(ctx, empId, req, dest)
 }
 
 func NewTaskUseCase(tskRepo tasks.TaskRepository, logger *logrus.Logger) tasks.TaskUC {

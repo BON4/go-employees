@@ -335,3 +335,34 @@ func TestTskPostgresRepo_GetByEmployeeId(t *testing.T) {
 	require.Greater(t, n, 2)
 	require.Equal(t, n, 3)
 }
+
+//func TestTskPostgresRepo_DeleteByEmployeeId_Slow(t *testing.T) {
+//	tskRepo := NewTaskPostgresRepo(ConnDB, taskTableName, empTableName)
+//	empRepo := repository.NewEmpPostgresRepo(ConnDB, empTableName)
+//	empUC := usecase.NewEmployeeUC(empRepo, nil)
+//
+//	t.Run("Slow test context cancellation", func(t *testing.T) {
+//		fEmp, err := EmployeeFactory.NewUser("test", "test", 120)
+//		require.NoError(t, err)
+//
+//		createdEmp, err := empUC.Create(context.Background(), &fEmp)
+//		require.NoError(t, err)
+//
+//		for i := 1; i < 10; i++ {
+//			task, err := TaskFactory.NewTask(createdEmp.EmpId, time.Now().Unix(), time.Now().Add(time.Hour*5).Unix(), false, fmt.Sprintf("Task #%d", i))
+//			require.NoError(t, err)
+//
+//			createdTask, err := tskRepo.Create(context.Background(), &task)
+//			require.NoError(t, err)
+//			require.NotNil(t, createdTask)
+//		}
+//
+//		dest := make([]models.Task, 10)
+//		_, err = tskRepo.List(context.Background(), &models.ListTskRequest{
+//			PageSize:   10,
+//			PageNumber: 0,
+//		}, dest)
+//		fmt.Println(dest)
+//		require.Nil(t, err)
+//	})
+//}
