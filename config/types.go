@@ -4,6 +4,7 @@ import "time"
 
 type Config struct {
 	Postgres PostgresConfig `yaml:"postgres"`
+	Downloader Downloader `yaml:"downloader"`
 }
 
 type PostgresConfig struct {
@@ -16,3 +17,6 @@ type PostgresConfig struct {
 	ConnectTimeout time.Duration `yaml:"connect-timeout"`
 }
 
+type Downloader struct {
+	FileFolder string `yaml:"file_folder"`
+}

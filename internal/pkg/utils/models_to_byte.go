@@ -12,7 +12,7 @@ const end = '\n'
 //TODO SHITS NEEDS GENERICS FOR CLEANER IMPLEMENTATION
 
 // EmpToByte - writes employee struct to buffer in csv RFC 4180 format, returns number of written bytes and error
-func EmpToByte(emp *models.Employee,  bw *bufio.Writer) (int, error) {
+func EmpToByte(emp *models.Employee, bw *bufio.Writer) (int, error) {
 	n := 0
 	if m, err := bw.WriteString(strconv.FormatUint(uint64(emp.EmpId), 10)); err != nil {
 		return 0, err

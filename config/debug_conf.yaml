@@ -5,3 +5,6 @@ postgres:
   user: admin
   password: 1234
   connect-timeout: 5s
+
+downloader:
+  file_folder: ./csv

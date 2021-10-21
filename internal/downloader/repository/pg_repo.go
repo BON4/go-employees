@@ -12,14 +12,17 @@ import (
 )
 
 type DownloaderRepository struct {
+	tskTableName string
+	empTableName string
 	conn *pgxpool.Pool
 }
+
 
 //TODO SHITS NEEDS GENERICS FOR CLEANER IMPLEMENTATION
 
 // WriteEmployees - Writes whole employee table to writer in csv RFC 4180 format, returns number of bytes that have been written and error
-func (d *DownloaderRepository) WriteEmployees(ctx context.Context, tableName string, writer io.Writer) (int, error) {
-	q := pgGetAllFromTable(tableName)
+func (d *DownloaderRepository) WriteEmployees(ctx context.Context, writer io.Writer) (int, error) {
+	q := pgGetAllFromTable(d.empTableName)
 	rows, err := d.conn.Query(ctx, q)
 	if err != nil {
 		return 0, gerrors.Wrap(err, "DownloaderRepository.WriteEmployees")
@@ -57,8 +60,8 @@ func (d *DownloaderRepository) WriteEmployees(ctx context.Context, tableName str
 }
 
 // WriteTasks - Writes whole task table to writer in csv RFC 4180 format, returns number of bytes that have been written and error
-func (d *DownloaderRepository) WriteTasks(ctx context.Context, tableName string, writer io.Writer) (int, error) {
-	q := pgGetAllFromTable(tableName)
+func (d *DownloaderRepository) WriteTasks(ctx context.Context, writer io.Writer) (int, error) {
+	q := pgGetAllFromTable(d.tskTableName)
 	rows, err := d.conn.Query(ctx, q)
 	if err != nil {
 		return 0, gerrors.Wrap(err, "DownloaderRepository.WriteTasks")
@@ -103,6 +106,37 @@ func (d *DownloaderRepository) WriteTasks(ctx context.Context, tableName string,
 	return n, nil
 }
 
-func NewDownloaderRepository(conn *pgxpool.Pool) downloader.DWRepository {
-	return &DownloaderRepository{conn: conn}
+func (d *DownloaderRepository) GetHashTasks(ctx context.Context) (string, error) {
+	q := pgGetMD5HashOfTaskTable(d.tskTableName)
+
+	var hash string
+
+	err := d.conn.QueryRow(ctx, q).Scan(&hash)
+	if err != nil {
+		return "", gerrors.Wrap(err, "DownloaderRepository.GetHashTasks.Scan")
+	}
+
+	return hash, nil
+}
+
+func (d *DownloaderRepository) GetHashEmployees(ctx context.Context) (string, error) {
+	q := pgGetMD5HashOfEmployeeTable(d.empTableName)
+
+	var hash string
+
+	err := d.conn.QueryRow(ctx, q).Scan(&hash)
+	if err != nil {
+		return "", gerrors.Wrap(err, "DownloaderRepository.GetHashEmployees.Scan")
+	}
+
+	return hash, nil
+}
+
+
+func NewDownloaderRepository(conn *pgxpool.Pool, tskTableName, empTableName string) downloader.DWRepository {
+	return &DownloaderRepository{
+		tskTableName: tskTableName,
+		empTableName: empTableName,
+		conn:         conn,
+	}
 }

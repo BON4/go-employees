@@ -89,15 +89,15 @@ func TestDownloaderRepository_Write(t *testing.T) {
 	require.NoError(t, flushTaskTable())
 	require.NoError(t, flushEmployeeTable())
 
+	tskRepo := tskRepoMd.NewTaskPostgresRepo(ConnDB, taskTableName, empTableName)
+	tskUc := tskUcMd.NewTaskUseCase(tskRepo, nil)
+
+	empRepo := empRepoMd.NewEmpPostgresRepo(ConnDB, empTableName)
+	empUC := empUcMd.NewEmployeeUC(empRepo, nil)
+
+	dwRepo := NewDownloaderRepository(ConnDB, taskTableName, empTableName)
+
 	t.Run("WriteTask", func(t *testing.T) {
-		tskRepo := tskRepoMd.NewTaskPostgresRepo(ConnDB, taskTableName, empTableName)
-		tskUc := tskUcMd.NewTaskUseCase(tskRepo, nil)
-
-		empRepo := empRepoMd.NewEmpPostgresRepo(ConnDB, empTableName)
-		empUC := empUcMd.NewEmployeeUC(empRepo, nil)
-
-		dwRepo := NewDownloaderRepository(ConnDB)
-
 		emp, err := EmployeeFactory.NewUser("test", "test", 1200)
 		require.NoError(t, err)
 
@@ -132,7 +132,7 @@ func TestDownloaderRepository_Write(t *testing.T) {
 		testBuf.Flush()
 		wActual.Close()
 
-		_, err = dwRepo.WriteTasks(context.Background(), taskTableName, wTest)
+		_, err = dwRepo.WriteTasks(context.Background(), wTest)
 		require.NoError(t, err)
 		wTest.Close()
 
@@ -143,11 +143,6 @@ func TestDownloaderRepository_Write(t *testing.T) {
 	require.NoError(t, flushEmployeeTable())
 
 	t.Run("WriteEmployees", func(t *testing.T) {
-		empRepo := empRepoMd.NewEmpPostgresRepo(ConnDB, empTableName)
-		empUC := empUcMd.NewEmployeeUC(empRepo, nil)
-
-		dwRepo := NewDownloaderRepository(ConnDB)
-
 		rActual, wActual := io.Pipe()
 		rTest, wTest := io.Pipe()
 
@@ -176,10 +171,55 @@ func TestDownloaderRepository_Write(t *testing.T) {
 		testBuf.Flush()
 		wActual.Close()
 
-		_, err := dwRepo.WriteEmployees(context.Background(), empTableName, wTest)
+		_, err := dwRepo.WriteEmployees(context.Background(), wTest)
 		require.NoError(t, err)
 		wTest.Close()
 
 		wg.Wait()
+	})
+
+	require.NoError(t, flushTaskTable())
+	require.NoError(t, flushEmployeeTable())
+}
+
+func TestDownloaderRepository_GetHash(t *testing.T) {
+	tskRepo := tskRepoMd.NewTaskPostgresRepo(ConnDB, taskTableName, empTableName)
+	tskUc := tskUcMd.NewTaskUseCase(tskRepo, nil)
+
+	empRepo := empRepoMd.NewEmpPostgresRepo(ConnDB, empTableName)
+	empUC := empUcMd.NewEmployeeUC(empRepo, nil)
+
+	dwRepo := NewDownloaderRepository(ConnDB, taskTableName, empTableName)
+
+	t.Run("Emplyee table md5 hash", func(t *testing.T) {
+		emp, err := EmployeeFactory.NewUser("test", "test", 1200)
+		require.NoError(t, err)
+
+		_, err = empUC.Create(context.Background(), &emp)
+		require.NoError(t, err)
+
+		hash, err := dwRepo.GetHashEmployees(context.Background())
+		require.NoError(t, err)
+		require.Equal(t, 32, len(hash))
+		fmt.Printf("Emplyee hash: %q\n", hash)
+	})
+
+	t.Run("Employee table md5 hash", func(t *testing.T) {
+		emp, err := EmployeeFactory.NewUser("test", "test", 1200)
+		require.NoError(t, err)
+
+		createdEmp, err := empUC.Create(context.Background(), &emp)
+		require.NoError(t, err)
+
+		task, err := TaskFactory.NewTask(createdEmp.EmpId, time.Now().Unix(), time.Now().Add(time.Hour*10).Unix(), false, "TASK 1")
+		require.NoError(t, err)
+
+		_, err = tskUc.Create(context.Background(), &task)
+		require.NoError(t, err)
+
+		hash, err := dwRepo.GetHashTasks(context.Background())
+		require.NoError(t, err)
+		require.Equal(t, 32, len(hash))
+		fmt.Printf("Task hash: %q\n", hash)
 	})
 }

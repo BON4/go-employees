@@ -6,6 +6,9 @@ import (
 )
 
 type DWRepository interface {
-	WriteTasks(ctx context.Context, tableName string, writer io.Writer) (int, error)
-	WriteEmployees(ctx context.Context, tableName string, writer io.Writer) (int, error)
+	WriteTasks(ctx context.Context, writer io.Writer) (int, error)
+	WriteEmployees(ctx context.Context, writer io.Writer) (int, error)
+
+	GetHashTasks(ctx context.Context) (string, error)
+	GetHashEmployees(ctx context.Context) (string, error)
 }
