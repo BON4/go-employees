@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"fmt"
 	"github.com/sirupsen/logrus"
 	"goland-hello/config"
 	"goland-hello/internal/downloader"
@@ -28,7 +27,7 @@ func (d *DownloaderUC) WriteTasks(ctx context.Context) (string, error) {
 		// csv file not exists, this means that csv is not upto date
 
 		//TODO dont know how this would behave with parallel
-		f, err := os.Create(hashFile)
+		f, err := os.OpenFile(hashFile, os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			return "", err
 		}
@@ -67,12 +66,10 @@ func (d *DownloaderUC) WriteEmployees(ctx context.Context) (string, error) {
 
 		defer f.Close()
 
-		n, err := d.repo.WriteEmployees(ctx, f)
+		_, err = d.repo.WriteEmployees(ctx, f)
 		if err != nil {
 			return "", err
 		}
-
-		fmt.Println("written: ", n)
 
 		if err = f.Sync(); err != nil {
 			return "", err

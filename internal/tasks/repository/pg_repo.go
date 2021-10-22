@@ -158,8 +158,11 @@ func (t *tskPostgresRepo) List(ctx context.Context, req *models.ListTskRequest, 
 	var foundTask models.Task
 	i := 0
 	for rows.Next() {
-		//TODO maybe return 0, err if context closed
-		if i >= len(dest) || ctx.Err() != nil {
+		if ctx.Err() != nil {
+			return i, gerrors.Wrap(ctx.Err(), "tskPostgresRepo.List.CtxErr")
+		}
+
+		if i >= len(dest) {
 			return i, nil
 		}
 
@@ -174,7 +177,7 @@ func (t *tskPostgresRepo) List(ctx context.Context, req *models.ListTskRequest, 
 		)
 
 		if err != nil {
-			return 0, gerrors.Wrap(err, "tskPostgresRepo.List")
+			return 0, gerrors.Wrap(err, "tskPostgresRepo.List.Scan")
 		}
 
 		dest[i] = foundTask
@@ -207,8 +210,11 @@ func (t *tskPostgresRepo) GetByEmployeeId(ctx context.Context, empId uint, req *
 	var foundTask models.Task
 	i := 0
 	for rows.Next() {
-		//TODO maybe return 0, err if context closed
-		if i >= len(dest) || ctx.Err() != nil {
+		if ctx.Err() != nil {
+			return i, gerrors.Wrap(ctx.Err(), "tskPostgresRepo.GetByEmployeeId.CtxErr")
+		}
+
+		if i >= len(dest) {
 			return i, nil
 		}
 
@@ -223,7 +229,7 @@ func (t *tskPostgresRepo) GetByEmployeeId(ctx context.Context, empId uint, req *
 			)
 
 		if err != nil {
-			return 0, gerrors.Wrap(err, "tskPostgresRepo.GetByEmployeeId")
+			return 0, gerrors.Wrap(err, "tskPostgresRepo.GetByEmployeeId.Scan")
 		}
 
 		dest[i] = foundTask

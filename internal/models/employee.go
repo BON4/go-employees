@@ -1,6 +1,8 @@
 package models
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type Employee struct {
 	EmpId uint    `json:"emp_id,omitempty"`
@@ -29,12 +31,12 @@ func NewEmployeeFactory(fc EmployeeFactoryConfig) EmployeeFactory{
 	return EmployeeFactory{fc: fc}
 }
 
-type FirstNameTooShortError struct {
+type firstNameTooShortError struct {
 	MinFirstNameLength int
 	ProvidedFirstNameLength int
 }
 
-func (p FirstNameTooShortError) Error() string {
+func (p firstNameTooShortError) Error() string {
 	return fmt.Sprintf(
 		"Provided first name is too short, min length: %d, provided password lentgh: %d",
 		p.MinFirstNameLength,
@@ -42,12 +44,12 @@ func (p FirstNameTooShortError) Error() string {
 	)
 }
 
-type LastNameTooShortError struct {
+type lastNameTooShortError struct {
 	MinLastNameLength int
 	ProvidedLastNameLength int
 }
 
-func (p LastNameTooShortError) Error() string {
+func (p lastNameTooShortError) Error() string {
 	return fmt.Sprintf(
 		"Provided last name is too short, min length: %d, provided password lentgh: %d",
 		p.MinLastNameLength,
@@ -55,12 +57,12 @@ func (p LastNameTooShortError) Error() string {
 	)
 }
 
-type SalaryOutOfBoundsError struct {
+type salaryOutOfBoundsError struct {
 	MinSalary float64
 	ProvidedSalary float64
 }
 
-func (p SalaryOutOfBoundsError) Error() string {
+func (p salaryOutOfBoundsError) Error() string {
 	return fmt.Sprintf(
 		"Salary out of bounds, min salary is: %d, provided salary is: %d",
 		p.MinSalary,
@@ -68,26 +70,33 @@ func (p SalaryOutOfBoundsError) Error() string {
 	)
 }
 
-func (efc EmployeeFactory) NewUser(fname string, lname string, sal float64) (Employee, error) {
+func (efc EmployeeFactory) validate(fname string, lname string, sal float64) error {
 	if len(fname) < efc.fc.MinFirstNameLength {
-		return Employee{}, FirstNameTooShortError{
+		return firstNameTooShortError{
 			MinFirstNameLength:      efc.fc.MinFirstNameLength,
 			ProvidedFirstNameLength: len(fname),
 		}
 	}
 
 	if len(lname) < efc.fc.MinLastNameLength {
-		return Employee{}, LastNameTooShortError{
+		return lastNameTooShortError{
 			MinLastNameLength:      efc.fc.MinLastNameLength,
 			ProvidedLastNameLength: len(lname),
 		}
 	}
 
 	if sal < efc.fc.MinSalary {
-		return Employee{}, SalaryOutOfBoundsError{
+		return salaryOutOfBoundsError{
 			MinSalary:      efc.fc.MinSalary,
 			ProvidedSalary: sal,
 		}
+	}
+	return nil
+}
+
+func (efc EmployeeFactory) NewUser(fname string, lname string, sal float64) (Employee, error) {
+	if err := efc.validate(fname, lname, sal); err != nil {
+		return Employee{}, err
 	}
 
 	return Employee{
@@ -95,4 +104,14 @@ func (efc EmployeeFactory) NewUser(fname string, lname string, sal float64) (Emp
 		Lname: lname,
 		Sal:   sal,
 	}, nil
+}
+
+// Validate - validates struct, returns validated struct or error
+// Can be added mechanism of hashing data before store or passing it to UC
+// It differs from NewUser, so when you're creating new employee you don't know its ID. But when you need to update it, or something else you got id
+func (efc EmployeeFactory) Validate(emp *Employee) (*Employee, error) {
+	if err := efc.validate(emp.Fname, emp.Lname, emp.Sal); err != nil {
+		return nil, err
+	}
+	return emp, nil
 }

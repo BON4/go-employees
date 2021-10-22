@@ -34,6 +34,10 @@ func (d *DownloaderRepository) WriteEmployees(ctx context.Context, writer io.Wri
 	n := 0
 	var foundEmp models.Employee
 	for rows.Next() {
+		if ctx.Err() != nil {
+			return 0, gerrors.Wrap(ctx.Err(), "DownloaderRepository.WriteEmployees.CtxErr")
+		}
+
 		err := rows.Scan(&foundEmp.EmpId, &foundEmp.Fname, &foundEmp.Lname, &foundEmp.Sal)
 
 		if err != nil {
@@ -74,7 +78,7 @@ func (d *DownloaderRepository) WriteTasks(ctx context.Context, writer io.Writer)
 	var foundTask models.Task
 	for rows.Next() {
 		if ctx.Err() != nil {
-			return n, nil
+			return 0, gerrors.Wrap(ctx.Err(), "DownloaderRepository.WriteTasks.CtxErr")
 		}
 
 		err := rows.

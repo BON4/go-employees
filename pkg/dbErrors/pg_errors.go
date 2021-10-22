@@ -3,6 +3,7 @@ package dbErrors
 import (
 	gerrors "github.com/pkg/errors"
 )
+
 const (
 	ErrDoesNotExists = "Resource does not exists"
 	ErrAlreadyExists = "Resource already exists"

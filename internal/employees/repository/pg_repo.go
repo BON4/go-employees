@@ -116,20 +116,24 @@ func (e *empPostgresRepo) List(ctx context.Context, req *models.ListEmpRequest, 
 	q := pgListEmployee(e.tableName)
 	rows, err := e.conn.Query(ctx, q, req.PageSize, req.PageNumber)
 	if err != nil {
-		return 0, err
+		return 0, gerrors.Wrap(err, "empPostgresRepo.List.Query")
 	}
 	defer rows.Close()
 
 	var foundEmp models.Employee
 	i := 0
 	for rows.Next() {
-		if i >= len(dest) || ctx.Err() != nil {
+		if ctx.Err() != nil {
+			return 0, gerrors.Wrap(ctx.Err(), "empPostgresRepo.List.CtxErr")
+		}
+
+		if i >= len(dest) {
 			return i, nil
 		}
 
 		err := rows.Scan(&foundEmp.EmpId, &foundEmp.Fname, &foundEmp.Lname, &foundEmp.Sal)
 		if err != nil {
-			return 0, err
+			return 0, gerrors.Wrap(err, "empPostgresRepo.List.Scan")
 		}
 
 		dest[i] = foundEmp
@@ -137,7 +141,7 @@ func (e *empPostgresRepo) List(ctx context.Context, req *models.ListEmpRequest, 
 	}
 
 	if rows.Err() != nil {
-		return 0, rows.Err()
+		return 0, gerrors.Wrap(rows.Err(), "empPostgresRepo.List.Rows")
 	}
 
 	return i, nil
