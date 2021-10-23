@@ -8,3 +8,12 @@ postgres:
 
 downloader:
   file_folder: /home/home/go/github.com/BON4/go-employees/csv/
+
+server:
+  AppVersion: 1.0.0
+  Port: :8080
+  Mode: Development
+  ReadTimeout: 5
+  WriteTimeout: 5
+  CtxDefaultTimeout: 12
+  Debug: false

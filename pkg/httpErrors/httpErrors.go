@@ -171,7 +171,8 @@ func ParseErrors(err error) RestErr {
 		if restErr, ok := err.(RestErr); ok {
 			return restErr
 		}
-		return NewInternalServerError(err)
+		return NewRestError(http.StatusInternalServerError, err.Error(), nil)
+		//return NewInternalServerError(err)
 	}
 }
 

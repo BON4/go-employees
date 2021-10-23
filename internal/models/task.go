@@ -12,7 +12,7 @@ type Task struct {
 	Close int64 `json:"close"`
 	Closed bool     `json:"closed,omitempty"`
 	Meta  string    `json:"meta"`
-	EmpId uint      `json:"emp_id,omitempty"`
+	EmpId uint      `json:"emp_id"`
 }
 
 type ListTskRequest struct {

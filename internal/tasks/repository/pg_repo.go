@@ -125,7 +125,7 @@ func (t *tskPostgresRepo) DeleteByTaskId(ctx context.Context, tskID uint) error 
 
 func (t *tskPostgresRepo) DeleteByEmployeeId(ctx context.Context, empId uint) error {
 	q := pgDeleteTaskByEmpId(t.taskTableName)
-	ctag, err := t.conn.Exec(ctx, q, empId)
+	_, err := t.conn.Exec(ctx, q, empId)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return dbErrors.NewDoesNotExists(err,"tskPostgresRepo.Delete: tasks with this credentials does not exists")
@@ -133,9 +133,9 @@ func (t *tskPostgresRepo) DeleteByEmployeeId(ctx context.Context, empId uint) er
 		return gerrors.Wrap(err, "tskPostgresRepo.Delete")
 	}
 
-	if ctag.RowsAffected() == 0 {
-		return dbErrors.NewUnknown(errors.New("tskPostgresRepo.Delete"), "nothing has been deleted")
-	}
+	//if ctag.RowsAffected() == 0 {
+	//	return dbErrors.NewUnknown(errors.New("tskPostgresRepo.Delete"), "nothing has been deleted")
+	//}
 	return nil
 }
 

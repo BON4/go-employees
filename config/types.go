@@ -5,6 +5,19 @@ import "time"
 type Config struct {
 	Postgres PostgresConfig `yaml:"postgres"`
 	Downloader Downloader `yaml:"downloader"`
+	Server ServerConfig `yaml:"server"`
+}
+
+type ServerConfig struct {
+	AppVersion        string        `yaml:"app_version"`
+	Port              string        `yaml:"port"`
+	PprofPort         string        `yaml:"pprof_port"`
+	Mode              string        `yaml:"mode"`
+	ReadTimeout       time.Duration `yaml:"read_timeout"`
+	WriteTimeout      time.Duration `yaml:"write_timeout"`
+	SSL               bool          `yaml:"ssl"`
+	CtxDefaultTimeout time.Duration `yaml:"ctx_default_timeout"`
+	Debug             bool          `yaml:"debug"`
 }
 
 type PostgresConfig struct {

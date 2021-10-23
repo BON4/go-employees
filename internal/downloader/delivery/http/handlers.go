@@ -36,8 +36,9 @@ func (d *downloaderHandler) GetEmployees() echo.HandlerFunc {
 }
 
 func NewDownloaderHandler(dwlUC downloader.DwlUC,
+						  logger *logrus.Logger,
 						  cfg *config.Config,
-						  logger *logrus.Logger) downloader.Handler {
+						  ) downloader.Handler {
 	return &downloaderHandler{
 		dwlUC:      dwlUC,
 		logger:     logger,

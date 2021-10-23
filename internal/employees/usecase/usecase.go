@@ -44,9 +44,10 @@ func (e *EmployeeUC) List(ctx context.Context, req *models.ListEmpRequest, dest 
 	return e.repo.List(ctx, req, dest)
 }
 
-func NewEmployeeUC(repo employees.EmpRepository, logger *logrus.Logger) employees.EmpUC {
+func NewEmployeeUC(repo employees.EmpRepository, tskUc tasks.TaskUC,logger *logrus.Logger) employees.EmpUC {
 	return &EmployeeUC{
 		repo:   repo,
+		tskUC: tskUc,
 		logger: logger,
 	}
 }

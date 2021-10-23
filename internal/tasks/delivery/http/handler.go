@@ -133,6 +133,7 @@ func (t *taskHandler) GetByEmployeeId() echo.HandlerFunc {
 
 		n, err := t.tskUC.GetByEmployeeId(c.Request().Context(), uint(empId), tskReq, dest)
 		if err != nil {
+
 			return c.JSON(httpErrors.ErrorResponse(err))
 		}
 		return c.JSON(http.StatusOK, dest[:n])
