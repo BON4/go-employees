@@ -44,7 +44,7 @@ func (d *DownloaderUC) WriteTasks(ctx context.Context) (string, error) {
 		}
 	}
 
-	return hashFile, nil
+	return "tsk_"+hash+".csv", nil
 }
 
 // WriteEmployees - write employee table to csv file, and return its name
@@ -76,7 +76,7 @@ func (d *DownloaderUC) WriteEmployees(ctx context.Context) (string, error) {
 		}
 	}
 
-	return hashFile, nil
+	return "emp_"+hash+".csv", nil
 }
 
 func NewDownloaderUC(repo downloader.DWRepository, cfg *config.Config, logger *logrus.Logger) downloader.DwlUC {

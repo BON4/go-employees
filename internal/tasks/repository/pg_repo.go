@@ -149,7 +149,7 @@ func (t *tskPostgresRepo) List(ctx context.Context, req *models.ListTskRequest, 
 	}
 
 	q := pgListTask(t.taskTableName)
-	rows, err := t.conn.Query(ctx, q, req.PageSize, req.PageNumber)
+	rows, err := t.conn.Query(ctx, q, req.PageSize, req.PageNumber*req.PageSize)
 	if err != nil {
 		return 0, gerrors.Wrap(err, "tskPostgresRepo.List")
 	}
@@ -201,7 +201,7 @@ func (t *tskPostgresRepo) GetByEmployeeId(ctx context.Context, empId uint, req *
 	}
 
 	q := pgGetTaskByEmpId(t.taskTableName, t.empTableName)
-	rows, err := t.conn.Query(ctx, q, empId, req.PageSize, req.PageNumber)
+	rows, err := t.conn.Query(ctx, q, empId, req.PageSize, req.PageNumber*req.PageSize)
 	if err != nil {
 		return 0, gerrors.Wrap(err, "tskPostgresRepo.GetByEmployeeId")
 	}

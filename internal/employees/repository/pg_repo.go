@@ -114,7 +114,7 @@ func (e *empPostgresRepo) List(ctx context.Context, req *models.ListEmpRequest, 
 	}
 
 	q := pgListEmployee(e.tableName)
-	rows, err := e.conn.Query(ctx, q, req.PageSize, req.PageNumber)
+	rows, err := e.conn.Query(ctx, q, req.PageSize, req.PageNumber*req.PageSize)
 	if err != nil {
 		return 0, gerrors.Wrap(err, "empPostgresRepo.List.Query")
 	}
