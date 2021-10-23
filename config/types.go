@@ -6,6 +6,7 @@ type Config struct {
 	Postgres PostgresConfig `yaml:"postgres"`
 	Downloader Downloader `yaml:"downloader"`
 	Server ServerConfig `yaml:"server"`
+	Logger Logger `yaml:"logger"`
 }
 
 type ServerConfig struct {
@@ -30,6 +31,11 @@ type PostgresConfig struct {
 	ConnectTimeout time.Duration `yaml:"connect-timeout"`
 }
 
+type Logger struct {
+	Development bool `yaml:"development"`
+	Level string `yaml:"level"`
+}
+
 type Downloader struct {
-	FileFolder string `yaml:"file_folder"`
+	FileFolder string
 }

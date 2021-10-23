@@ -14,6 +14,13 @@ import (
 )
 
 func (s *Server) MapHandlers(e *echo.Echo) error {
+	if s.cfg.Logger.Development {
+		s.e.HTTPErrorHandler = func(err error, context echo.Context) {
+			s.logger.Error(err)
+		}
+		s.logger.SetLevel(s.logger.Level)
+	}
+	
 	tskRepo := tskRepoMd.NewTaskPostgresRepo(s.db, "task", "employee")
 	tskUc := tskUcMd.NewTaskUseCase(tskRepo, s.logger)
 	tskRoute := tskHttp.NewTaskHandler(tskUc, s.tskFct, s.logger, s.cfg)

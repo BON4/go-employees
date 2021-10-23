@@ -6,9 +6,6 @@ postgres:
   password: 1234
   connect-timeout: 5s
 
-downloader:
-  file_folder: /home/home/go/github.com/BON4/go-employees/csv/
-
 server:
   AppVersion: 1.0.0
   Port: :8080
@@ -16,4 +13,8 @@ server:
   ReadTimeout: 5
   WriteTimeout: 5
   CtxDefaultTimeout: 12
-  Debug: false
+  Debug: true
+
+logger:
+  development: true
+  level: info

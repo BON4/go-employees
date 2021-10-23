@@ -6,8 +6,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"goland-hello/config"
 	"goland-hello/internal/employees/repository"
-	"goland-hello/internal/employees/usecase"
+	empUcMd "goland-hello/internal/employees/usecase"
 	"goland-hello/internal/models"
+	"goland-hello/internal/tasks/usecase"
 	"goland-hello/pkg/dbErrors"
 	"testing"
 	"time"
@@ -79,8 +80,9 @@ func TestMain(m *testing.M) {
 func TestTskPostgresRepo_Create(t *testing.T) {
 	t.Parallel()
 	tskRepo := NewTaskPostgresRepo(ConnDB, taskTableName, empTableName)
+	tskUC := usecase.NewTaskUseCase(tskRepo, nil)
 	empRepo := repository.NewEmpPostgresRepo(ConnDB, empTableName)
-	empUC := usecase.NewEmployeeUC(empRepo, nil)
+	empUC := empUcMd.NewEmployeeUC(empRepo, tskUC,nil)
 
 	t.Run("OK", func(t *testing.T) {
 		fEmp, err := EmployeeFactory.NewUser("test", "test", 120)
@@ -115,8 +117,9 @@ func TestTskPostgresRepo_Create(t *testing.T) {
 func TestTskPostgresRepo_Update(t *testing.T) {
 	t.Parallel()
 	tskRepo := NewTaskPostgresRepo(ConnDB, taskTableName, empTableName)
+	tskUC := usecase.NewTaskUseCase(tskRepo, nil)
 	empRepo := repository.NewEmpPostgresRepo(ConnDB, empTableName)
-	empUC := usecase.NewEmployeeUC(empRepo, nil)
+	empUC := empUcMd.NewEmployeeUC(empRepo, tskUC,nil)
 
 	t.Run("OK", func(t *testing.T) {
 		fEmp, err := EmployeeFactory.NewUser("test", "test", 120)
@@ -172,8 +175,9 @@ func TestTskPostgresRepo_Update(t *testing.T) {
 func TestTskPostgresRepo_DeleteByTaskId(t *testing.T) {
 	t.Parallel()
 	tskRepo := NewTaskPostgresRepo(ConnDB, taskTableName, empTableName)
+	tskUC := usecase.NewTaskUseCase(tskRepo, nil)
 	empRepo := repository.NewEmpPostgresRepo(ConnDB, empTableName)
-	empUC := usecase.NewEmployeeUC(empRepo, nil)
+	empUC := empUcMd.NewEmployeeUC(empRepo, tskUC,nil)
 
 	t.Run("OK", func(t *testing.T) {
 		fEmp, err := EmployeeFactory.NewUser("test", "test", 120)
@@ -211,8 +215,9 @@ func TestTskPostgresRepo_DeleteByTaskId(t *testing.T) {
 func TestTskPostgresRepo_DeleteByEmployeeId(t *testing.T) {
 	t.Parallel()
 	tskRepo := NewTaskPostgresRepo(ConnDB, taskTableName, empTableName)
+	tskUC := usecase.NewTaskUseCase(tskRepo, nil)
 	empRepo := repository.NewEmpPostgresRepo(ConnDB, empTableName)
-	empUC := usecase.NewEmployeeUC(empRepo, nil)
+	empUC := empUcMd.NewEmployeeUC(empRepo,tskUC, nil)
 
 	t.Run("OK", func(t *testing.T) {
 		fEmp, err := EmployeeFactory.NewUser("test", "test", 120)
@@ -257,8 +262,9 @@ func TestTskPostgresRepo_DeleteByEmployeeId(t *testing.T) {
 
 func TestTskPostgresRepo_List(t *testing.T) {
 	tskRepo := NewTaskPostgresRepo(ConnDB, taskTableName, empTableName)
+	tskUC := usecase.NewTaskUseCase(tskRepo, nil)
 	empRepo := repository.NewEmpPostgresRepo(ConnDB, empTableName)
-	empUC := usecase.NewEmployeeUC(empRepo, nil)
+	empUC := empUcMd.NewEmployeeUC(empRepo,tskUC, nil)
 
 	fEmp, err := EmployeeFactory.NewUser("test", "test", 120)
 	require.NoError(t, err)
@@ -298,8 +304,9 @@ func TestTskPostgresRepo_List(t *testing.T) {
 
 func TestTskPostgresRepo_GetByEmployeeId(t *testing.T) {
 	tskRepo := NewTaskPostgresRepo(ConnDB, taskTableName, empTableName)
+	tskUC := usecase.NewTaskUseCase(tskRepo, nil)
 	empRepo := repository.NewEmpPostgresRepo(ConnDB, empTableName)
-	empUC := usecase.NewEmployeeUC(empRepo, nil)
+	empUC := empUcMd.NewEmployeeUC(empRepo, tskUC,nil)
 
 	fEmp, err := EmployeeFactory.NewUser("test", "test", 120)
 	require.NoError(t, err)
@@ -340,7 +347,7 @@ func TestTskPostgresRepo_GetByEmployeeId(t *testing.T) {
 //func TestTskPostgresRepo_DeleteByEmployeeId_Slow(t *testing.T) {
 //	tskRepo := NewTaskPostgresRepo(ConnDB, taskTableName, empTableName)
 //	empRepo := repository.NewEmpPostgresRepo(ConnDB, empTableName)
-//	empUC := usecase.NewEmployeeUC(empRepo, nil)
+//	empUC := empUcMd.NewEmployeeUC(empRepo, nil)
 //
 //	t.Run("Slow test context cancellation", func(t *testing.T) {
 //		fEmp, err := EmployeeFactory.NewUser("test", "test", 120)

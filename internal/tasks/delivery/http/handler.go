@@ -61,7 +61,12 @@ func (t *taskHandler) Update() echo.HandlerFunc {
 
 func (t *taskHandler) GetByTaskId() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		tskId, err := strconv.ParseUint(c.Param("tsk_id"), 10, 32)
+		tskIdParam := c.Param("tsk_id")
+		if len(tskIdParam) == 0 {
+			return c.JSON(httpErrors.ErrorResponse(httpErrors.NewNotFoundError("tsk_id not provided")))
+		}
+
+		tskId, err := strconv.ParseUint(tskIdParam, 10, 32)
 		if err != nil {
 			return c.JSON(httpErrors.ErrorResponse(err))
 		}
@@ -76,7 +81,11 @@ func (t *taskHandler) GetByTaskId() echo.HandlerFunc {
 
 func (t *taskHandler) DeleteByTaskId() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		tskId, err := strconv.ParseUint(c.Param("tsk_id"), 10, 32)
+		tskIdParam := c.Param("tsk_id")
+		if len(tskIdParam) == 0 {
+			return c.JSON(httpErrors.ErrorResponse(httpErrors.NewNotFoundError("tsk_id not provided")))
+		}
+		tskId, err := strconv.ParseUint(tskIdParam, 10, 32)
 
 		err = t.tskUC.DeleteByTaskId(c.Request().Context(), uint(tskId))
 		if err != nil {
@@ -118,7 +127,12 @@ func (t *taskHandler) List() echo.HandlerFunc {
 
 func (t *taskHandler) GetByEmployeeId() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		empId, err := strconv.ParseUint(c.Param("emp_id"), 10, 32)
+		empIdParam := c.Param("emp_id")
+		if len(empIdParam) == 0 {
+			return c.JSON(httpErrors.ErrorResponse(httpErrors.NewNotFoundError("emp_id not provided")))
+		}
+
+		empId, err := strconv.ParseUint(empIdParam, 10, 32)
 		if err != nil {
 			return c.JSON(httpErrors.ErrorResponse(err))
 		}

@@ -6,6 +6,7 @@ import (
 	"goland-hello/config"
 	"goland-hello/internal/models"
 	"goland-hello/internal/server"
+	"os"
 	"time"
 )
 
@@ -20,7 +21,10 @@ func main(){
 		MinSalary:          0,
 	})
 
-	Config, err := config.ParseConfig("/home/home/go/github.com/BON4/go-employees/config/test_conf.yaml")
+	Config, err := config.ParseConfig(os.Getenv("CFG_FL"))
+	if err != nil {
+		panic(err)
+	}
 	ConnDB, err := config.OpenPostgresPoolConfig(context.Background(), &Config)
 	if err != nil {
 		panic(err)

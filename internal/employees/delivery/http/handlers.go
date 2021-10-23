@@ -68,7 +68,11 @@ func (e *employeeHandler) Update() echo.HandlerFunc {
 
 func (e *employeeHandler) Delete() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		empId, err := strconv.ParseUint(c.Param("emp_id"), 10, 32)
+		empIdParam := c.Param("emp_id")
+		if len(empIdParam) == 0 {
+			return c.JSON(httpErrors.ErrorResponse(httpErrors.NewNotFoundError("emp_id not provided")))
+		}
+		empId, err := strconv.ParseUint(empIdParam, 10, 32)
 		if err != nil {
 			log.Warn(err)
 			return c.JSON(httpErrors.ErrorResponse(err))
@@ -84,7 +88,12 @@ func (e *employeeHandler) Delete() echo.HandlerFunc {
 
 func (e *employeeHandler) GetById() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		empId, err := strconv.ParseUint(c.Param("emp_id"), 10, 32)
+		empIdParam := c.Param("emp_id")
+		if len(empIdParam) == 0 {
+			return c.JSON(httpErrors.ErrorResponse(httpErrors.NewNotFoundError("emp_id not provided")))
+		}
+
+		empId, err := strconv.ParseUint(empIdParam, 10, 32)
 		if err != nil {
 			log.Warn(err)
 			return c.JSON(httpErrors.ErrorResponse(err))
